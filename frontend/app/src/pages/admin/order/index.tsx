@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, ClipboardList, Pencil, Plus, RotateCcw, Search } from "lucide-react";
+import { CheckCircle2, ClipboardList, Pencil, Plus, Printer, RotateCcw, Search } from "lucide-react";
 import { Button } from "@/components/buttons/Button";
 import { AdminSidebar } from "@/components/navigation/AdminSidebar";
 import {
@@ -18,6 +18,7 @@ import {
 } from "./PaymentModal";
 import { OrderEditPanel } from "./OrderEditPanel";
 import { Notifications } from "../../../components/notifications/index.js";
+import { printOrder } from "@/services/orders.service";
 import "./styles.css";
 
 type OrderItem = {
@@ -172,6 +173,7 @@ export default function Orders({ onNavigate }: OrdersProps) {
   const [paymentOrderId, setPaymentOrderId] = useState<number | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [printingOrderId, setPrintingOrderId] = useState<number | null>(null);
 
   const periodOrders = useMemo(
     () =>
@@ -305,6 +307,28 @@ export default function Orders({ onNavigate }: OrdersProps) {
     );
     setEditingOrderId(null);
     setActivityMessage(`Alterações do pedido #${orderId} salvas.`);
+  };
+
+  const printSelectedOrder = async (order: Order) => {
+    setPrintingOrderId(order.id);
+    try {
+      await printOrder({
+        orderId: String(order.id),
+        tableId: order.table,
+        items: order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          notes: item.observation,
+        })),
+      });
+      setActivityMessage(`Pedido #${order.id} enviado para a impressora.`);
+    } catch (reason) {
+      setActivityMessage(
+        `Falha ao imprimir o pedido #${order.id}: ${(reason as Error).message}`,
+      );
+    } finally {
+      setPrintingOrderId(null);
+    }
   };
 
   const paymentOrder =
@@ -559,6 +583,14 @@ export default function Orders({ onNavigate }: OrdersProps) {
                   >
                     <Pencil aria-hidden="true" />
                     Editar pedido
+                  </button>
+                  <button
+                    type="button"
+                    disabled={printingOrderId === selectedOrder.id}
+                    onClick={() => printSelectedOrder(selectedOrder)}
+                  >
+                    <Printer aria-hidden="true" />
+                    {printingOrderId === selectedOrder.id ? "Imprimindo..." : "Imprimir"}
                   </button>
                 </div>
 
