@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ShoppingCart, Menu as MenuIcon, Clock, ReceiptText } from "lucide-react";
 import { useCart } from "@/contexts/useCart";
 import { QuantitySelector, Button } from "@/components";
-import { createOrder, CURRENT_ATTENDANCE_ID } from "@/services/orders.service";
+import { createOrder, printOrder, CURRENT_ATTENDANCE_ID } from "@/services/orders.service";
 import "./styles.css";
 
 type CartPageProps = {
@@ -31,7 +31,7 @@ export function Cart({ onBack, onGoToMenu, onOrderConfirmed, allowOrdering = tru
     setError(null);
 
     try {
-      await createOrder({
+      const order = await createOrder({
         attendanceId: CURRENT_ATTENDANCE_ID,
         items: items.map((line) => ({
           productId: line.product.id,
@@ -39,6 +39,22 @@ export function Cart({ onBack, onGoToMenu, onOrderConfirmed, allowOrdering = tru
           notes: line.notes || undefined,
         })),
       });
+
+      // Teste de conectividade: imprime automaticamente ao criar o pedido.
+      // Isso sai de aqui quando a tela da cozinha tiver o botao manual de imprimir.
+      try {
+        await printOrder({
+          orderId: order.id,
+          tableId: CURRENT_ATTENDANCE_ID,
+          items: items.map((line) => ({
+            name: line.product.name,
+            quantity: line.quantity,
+            notes: line.notes || undefined,
+          })),
+        });
+      } catch (printError) {
+        console.error("Falha ao imprimir o pedido (ponte da impressora offline?):", printError);
+      }
 
       clearCart();
       setOrderPlaced(true);
