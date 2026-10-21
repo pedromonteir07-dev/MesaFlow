@@ -22,5 +22,5 @@ export function TableEntry() {
   if (!token) return <main className="mf-screen"><p>Escaneie o QR Code da sua mesa para acessar o cardápio.</p></main>;
   if (error) return <main className="mf-screen"><h1>Não foi possível identificar a mesa</h1><p role="alert">{error}</p><button onClick={() => { setError(""); setTable(null); setAttempt((value) => value + 1); }}>Tentar novamente</button></main>;
   if (!table) return <main className="mf-screen" role="status">Identificando sua mesa…</main>;
-  return <><div role="status" className="table-origin">Mesa {table.number}{table.name ? ` — ${table.name}` : ""}</div><ClientFlow allowOrdering={false} /></>;
+  return <><div role="status" className="table-origin">Mesa {table.number}{table.name ? ` — ${table.name}` : ""}</div><ClientFlow allowOrdering={true} />  {/* TODO: reverter pra false antes de mesclar na main - so pra testar conectividade da impressao */}</>;
 }
